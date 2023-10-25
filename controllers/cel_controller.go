@@ -69,6 +69,8 @@ func GetCel(c *gin.Context) {
 	headerRow.AddCell().Value = "Userdeftype"
 	headerRow.AddCell().Value = "Extra"
 
+	// var row_count int = 0
+
 	for _, each := range results {
 		row := sheet.AddRow()
 		row.AddCell().Value = strconv.Itoa(each.ID)
@@ -91,10 +93,14 @@ func GetCel(c *gin.Context) {
 		row.AddCell().Value = each.Peer
 		row.AddCell().Value = each.Userdeftype
 		row.AddCell().Value = each.Extra
+		// row_count++
+		// //print .. "code at "" row
+		// fmt.Println("code at ", row_count, " row")
+
 	}
 
 	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Header("Content-Disposition", "attachment; filename=data.xlsx")
+	c.Header("Content-Disposition", "attachment; filename=GO_data.xlsx")
 
 	// Write the Excel file data to the response
 	err = file.Write(c.Writer)
