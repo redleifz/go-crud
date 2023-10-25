@@ -14,7 +14,7 @@ func main() {
 
 	// Load environment variables from .env
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env fileddd ")
 	}
 
 	// Get the port number from the environment variables
@@ -28,6 +28,7 @@ func main() {
 
 	// Mount your routes inside the /api group
 	routes.UserRoute(apiGroup) // Example, you can add more routes here
+	routes.CelRoutes(apiGroup)
 
 	// router.Run("localhost:6000")'
 
