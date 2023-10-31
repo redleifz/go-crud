@@ -96,6 +96,8 @@ func UserLogin(c *gin.Context) {
 		return
 	}
 
+	// fmt.Println(user)
+
 	db := configs.ConnectDB()
 	// var foundUser models.User
 	var storedUsername, storedHashedPassword string
@@ -131,7 +133,15 @@ func UserLogin(c *gin.Context) {
 	}
 
 	// Authentication successful, return the token
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "access_token": tokenString})
+	c.JSON(http.StatusOK, gin.H{
+		"status":  http.StatusOK,
+		"message": "Login successful",
+		"data": gin.H{
+			"username":     user.UserLogin,
+			"access_token": tokenString,
+		},
+	})
+	fmt.Println(user.UserLogin, " Success Login")
 
 	return
 }
