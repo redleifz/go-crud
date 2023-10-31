@@ -2,6 +2,8 @@ module go-crud
 
 go 1.20
 
+require gorm.io/gorm v1.25.5
+
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/0xAX/notificator v0.0.0-20220220101646-ee9b8921e557 // indirect
@@ -17,6 +19,7 @@ require (
 	github.com/cosmtrek/air v1.47.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/creack/pty v1.1.18 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
@@ -29,6 +32,8 @@ require (
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/gohugoio/hugo v0.119.0 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.17.1 // indirect

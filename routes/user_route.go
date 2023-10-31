@@ -14,6 +14,4 @@ func UserRoute(apiGroup *gin.RouterGroup) {
 	apiGroup.POST("user/", controllers.CreateUser)
 	apiGroup.POST("user/login/", controllers.UserLogin)
 
-	
-
 }

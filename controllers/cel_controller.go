@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"go-crud/configs"
 	"go-crud/models"
 	"net/http"
@@ -110,5 +111,50 @@ func GetCel(c *gin.Context) {
 	}
 
 	//send file
+}
 
+func ExcelHandler(c *gin.Context) {
+	// totalRowsStr := c.Param("total_rows")
+
+	// fmt.Println(totalRowsStr)
+	// totalRows, err := strconv.Atoi(totalRowsStr)
+	// if err != nil {
+	// 	c.String(http.StatusBadRequest, "Invalid total_rows parameter")
+	// 	return
+	// }
+
+	// if totalRows <= 0 {
+	// 	c.String(http.StatusBadRequest, "total_rows must be a positive integer")
+	// 	return
+	// }
+
+	totalRows := 100000
+
+	file := xlsx.NewFile()
+	sheet, err := file.AddSheet("RandomStrings")
+	if err != nil {
+		fmt.Println(err)
+		c.String(http.StatusInternalServerError, "Error creating Excel sheet")
+		return
+	}
+
+	charSet := "abcdefghijklmnopqrstuvwxyz"
+
+	for i := 0; i < totalRows; i++ {
+		row := sheet.AddRow()
+		for j := 0; j < 20; j++ {
+			cell := row.AddCell()
+			cell.SetString(charSet)
+		}
+	}
+
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", "attachment; filename=RandomStrings.xlsx")
+
+	err = file.Write(c.Writer)
+	if err != nil {
+		fmt.Println(err)
+		c.String(http.StatusInternalServerError, "Error writing Excel file")
+		return
+	}
 }

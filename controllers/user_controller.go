@@ -9,7 +9,9 @@ import (
 	"go-crud/models"
 	"go-crud/responses"
 	"net/http"
+	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -86,10 +88,52 @@ func HashPassword(password string) (string, error) {
 
 func UserLogin(c *gin.Context) {
 
-	//print request body
+	//match value from json body request
+	var user models.User
 
-	return // return nothing
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	db := configs.ConnectDB()
+	// var foundUser models.User
+	var storedUsername, storedHashedPassword string
+
+	// fmt.Println(user.UserLogin)
+
+	// Query the database to get username and password
+	err := db.QueryRow("SELECT user_login, user_pwd FROM user WHERE user_login = ?", user.UserLogin).Scan(&storedUsername, &storedHashedPassword)
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid username or password"})
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(storedHashedPassword), []byte(user.UserPwd))
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+		return
+	}
+
+	//jwt sign
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["username"] = storedUsername
+	claims["exp"] = time.Now().AddDate(0, 0, 30).Unix() // Set expiration time to 30 days
+
+	// Sign the token with a secret key
+	tokenString, err := token.SignedString([]byte("your-secret-key"))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sign the token"})
+		return
+	}
+
+	// Authentication successful, return the token
+	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "access_token": tokenString})
+
+	return
 }
 
 func CreateUser(c *gin.Context) {
