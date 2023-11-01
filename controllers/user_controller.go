@@ -9,19 +9,27 @@ import (
 	"go-crud/models"
 	"go-crud/responses"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
+
+func init() {
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("Error loading .env file")
+	}
+}
 
 func GetAllUsers(c *gin.Context) {
 	// Get the DB instance from your configs package
 	db := configs.ConnectDB()
 
 	// Query all users from the database
-	rows, err := db.Query("SELECT user_id, user_login, user_pwd FROM user")
+	rows, err := db.Query("SELECT user_id, user_login, user_citizen_id, user_password FROM user")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -32,7 +40,7 @@ func GetAllUsers(c *gin.Context) {
 
 	for rows.Next() {
 		var user models.User
-		if err := rows.Scan(&user.UserID, &user.UserLogin, &user.UserPwd); err != nil {
+		if err := rows.Scan(&user.UserID, &user.UserLogin, &user.UserCitizenId, &user.UserPassword); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -51,7 +59,7 @@ func GetAllUsers(c *gin.Context) {
 
 func QueryUsers() (*sql.Rows, error) {
 	db := configs.ConnectDB()
-	rows, err := db.Query("SELECT user_id, user_login, user_pwd FROM user")
+	rows, err := db.Query("SELECT user_id, user_login, user_password FROM user")
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +95,6 @@ func HashPassword(password string) (string, error) {
 }
 
 func UserLogin(c *gin.Context) {
-
-	//match value from json body request
 	var user models.User
 
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -96,54 +102,59 @@ func UserLogin(c *gin.Context) {
 		return
 	}
 
-	// fmt.Println(user)
-
 	db := configs.ConnectDB()
-	// var foundUser models.User
-	var storedUsername, storedHashedPassword string
+	var storedUsername, storedHashedPassword, storeRole string
 
-	// fmt.Println(user.UserLogin)
-
-	// Query the database to get username and password
-	err := db.QueryRow("SELECT user_login, user_pwd FROM user WHERE user_login = ?", user.UserLogin).Scan(&storedUsername, &storedHashedPassword)
+	err := db.QueryRow("SELECT user_login, user_password ,user_role FROM user WHERE user_login = ?", user.UserLogin).Scan(&storedUsername, &storedHashedPassword, &storeRole)
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid username or password"})
 		return
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(storedHashedPassword), []byte(user.UserPwd))
+	err = bcrypt.CompareHashAndPassword([]byte(storedHashedPassword), []byte(user.UserPassword))
 	if err != nil {
 		fmt.Println(err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
 
-	//jwt sign
+	// JWT signing process using the loaded secret key from environment variable
+	secretKey := []byte(os.Getenv("JWT_SECRET_KEY"))
+
+	fmt.Println(`secret`, secretKey)
+
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["username"] = storedUsername
+	if storeRole == "3" {
+		claims["role"] = "admin"
+	} else {
+		claims["role"] = "user"
+	}
 	claims["exp"] = time.Now().AddDate(0, 0, 30).Unix() // Set expiration time to 30 days
 
-	// Sign the token with a secret key
-	tokenString, err := token.SignedString([]byte("your-secret-key"))
+	tokenString, err := token.SignedString(secretKey)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to sign the token"})
 		return
 	}
 
-	// Authentication successful, return the token
+	role := "user"
+	if storeRole == "3" {
+		role = "admin"
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"status":  http.StatusOK,
 		"message": "Login successful",
 		"data": gin.H{
 			"username":     user.UserLogin,
 			"access_token": tokenString,
+			"role":         role, // Assigns 'admin' for role 3, otherwise 'user'
 		},
 	})
 	fmt.Println(user.UserLogin, " Success Login")
-
-	return
 }
 
 func CreateUser(c *gin.Context) {
@@ -170,14 +181,14 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	hash, _ := HashPassword(user.UserPwd) // ignore error for the sake of simplicity
+	hash, _ := HashPassword(user.UserPassword) // ignore error for the sake of simplicity
 
-	fmt.Println("Password:", user.UserPwd)
+	fmt.Println("Password:", user.UserPassword)
 	fmt.Println("Hash:    ", hash)
 
 	// Insert user to the database
-	_, err = db.Exec("INSERT INTO user (user_login, user_pwd, user_IDcard) VALUES (?, ?, ?)",
-		user.UserLogin, hash, user.UserIdCard)
+	_, err = db.Exec("INSERT INTO user (user_login, user_password, user_citizen_id, user_role) VALUES (?, ?, ?, ?)",
+		user.UserLogin, hash, user.UserCitizenId, user.UserRole)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
