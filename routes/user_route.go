@@ -11,6 +11,7 @@ import (
 func UserRoute(apiGroup *gin.RouterGroup) {
 	// Apply the middleware to the specific route
 	apiGroup.GET("user/", middleware.VerifyTokenMiddleware(), middleware.CheckUserRole, controllers.GetAllUsers)
+	// apiGroup.GET("user/", controllers.GetAllUsers)
 
 	apiGroup.GET("user/getexcel/", controllers.GetAllUsersExcelFile)
 

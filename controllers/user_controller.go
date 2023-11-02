@@ -132,7 +132,10 @@ func UserLogin(c *gin.Context) {
 	} else {
 		claims["role"] = "user"
 	}
-	claims["exp"] = time.Now().AddDate(0, 0, 30).Unix() // Set expiration time to 30 days
+
+	claims["exp"] = time.Now().Add(time.Minute).Unix() // Set expiration time to 1 minute
+	// claims["exp"] = time.Now().AddDate(0, 0, 30).Unix() // Set expiration time to 30 days
+	// claims["exp"] = time.Now().AddDate(5, 0, 0).Unix() // Set expiration time to 5 years
 
 	tokenString, err := token.SignedString(secretKey)
 	if err != nil {

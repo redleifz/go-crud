@@ -24,7 +24,7 @@ func VerifyTokenMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString := c.GetHeader("Authorization")
 
-		fmt.Println(`token :`, tokenString)
+		// fmt.Println(`token :`, tokenString)
 
 		if tokenString == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
@@ -45,13 +45,13 @@ func VerifyTokenMiddleware() gin.HandlerFunc {
 			return []byte(secretKey), nil
 		})
 
-		if err != nil || !token.Valid {
+		if err != nil {
 			fmt.Println("Token validation error:", err) // Log token validation error
-			fmt.Println("Token content:", tokenString)  // Log token content
+			// fmt.Println("Token content:", tokenString)  // Log token content
 
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-			c.Abort()
-			return
+			// c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			// c.Abort()
+			// return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
